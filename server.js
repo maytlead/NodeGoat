@@ -71,6 +71,10 @@ MongoClient.connect(db, (err, db) => {
         extended: false
     }));
 
+    // Fix for A5 - Security MisConfig
+    // TODO: make sure assets are declared before app.use(session())
+    app.use(express.static(`${__dirname}/app/assets`));
+
     // Enable session management using express middleware
     app.use(session({
         // genid: (req) => {
@@ -80,11 +84,10 @@ MongoClient.connect(db, (err, db) => {
         // Both mandatory in Express v4
         saveUninitialized: true,
         resave: true,
-        /*
+
         // Fix for A5 - Security MisConfig
         // Use generic cookie name
         key: "sessionId",
-        */
 
         // Fix for A3 - XSS
         // TODO: Add "maxAge"
@@ -111,9 +114,6 @@ MongoClient.connect(db, (err, db) => {
     app.engine(".html", consolidate.swig);
     app.set("view engine", "html");
     app.set("views", `${__dirname}/app/views`);
-    // Fix for A5 - Security MisConfig
-    // TODO: make sure assets are declared before app.use(session())
-    app.use(express.static(`${__dirname}/app/assets`));
 
 
     // Initializing marked library
