@@ -7,11 +7,11 @@ const session = require("express-session");
 // const csrf = require('csurf');
 const consolidate = require("consolidate"); // Templating library adapter for Express
 const swig = require("swig");
-// const helmet = require("helmet");
+const helmet = require("helmet");
 const MongoClient = require("mongodb").MongoClient; // Driver for connecting to MongoDB
 // const http = require("http");
 const marked = require("marked");
-//const nosniff = require('dont-sniff-mimetype');
+const nosniff = require('dont-sniff-mimetype');
 const app = express(); // Web framework to handle routing requests
 const routes = require("./app/routes");
 const { port, db, cookieSecret } = require("./config/config"); // Application config properties
@@ -34,7 +34,6 @@ MongoClient.connect(db, (err, db) => {
     }
     console.log(`Connected to the database`);
 
-    /*
     // Fix for A5 - Security MisConfig
     // TODO: Review the rest of helmet options, like "xssFilter"
     // Remove default x-powered-by response header
@@ -61,7 +60,6 @@ MongoClient.connect(db, (err, db) => {
 
     // Forces browser to only use the Content-Type set in the response header instead of sniffing or guessing it
     app.use(nosniff());
-    */
 
     // Adding/ remove HTTP Headers for security
     app.use(favicon(__dirname + "/app/assets/favicon.ico"));
@@ -73,6 +71,10 @@ MongoClient.connect(db, (err, db) => {
         extended: false
     }));
 
+    // Fix for A5 - Security MisConfig
+    // TODO: make sure assets are declared before app.use(session())
+    app.use(express.static(`${__dirname}/app/assets`));
+
     // Enable session management using express middleware
     app.use(session({
         // genid: (req) => {
@@ -82,11 +84,10 @@ MongoClient.connect(db, (err, db) => {
         // Both mandatory in Express v4
         saveUninitialized: true,
         resave: true,
-        /*
+
         // Fix for A5 - Security MisConfig
         // Use generic cookie name
         key: "sessionId",
-        */
 
         // Fix for A3 - XSS
         // TODO: Add "maxAge"
@@ -113,9 +114,6 @@ MongoClient.connect(db, (err, db) => {
     app.engine(".html", consolidate.swig);
     app.set("view engine", "html");
     app.set("views", `${__dirname}/app/views`);
-    // Fix for A5 - Security MisConfig
-    // TODO: make sure assets are declared before app.use(session())
-    app.use(express.static(`${__dirname}/app/assets`));
 
 
     // Initializing marked library
